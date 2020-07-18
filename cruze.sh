@@ -19,7 +19,7 @@ echo "-------------------Assetfinder Started  ----------------------------------
 assetfinder --subs-only $domain | tee $domain/asset_subs.txt
 #Sublister
 echo "-------------------Sublister Started  -------------------------------------------"
-python3 ~/tools/Sublist3r/sublist3r.py -v -t 10 -d $domain -o $domain/subs.txt
+python3 /opt/Sublist3r/sublist3r.py -v -t 10 -d $domain -o $domain/subs.txt
 # cat $domain/subs.txt | wc -l
 echo "Sublister Scan Completed-----------------------------------------"
 
@@ -32,7 +32,7 @@ echo "Now aquatone will start to screenshot and some extra recons."
 cat $domain/subdomains.txt | aquatone -chrome-path /usr/bin/brave -ports xlarge -out $domain/
 
 echo "Total number of subdomains"
-cat  $domain/subdomains.txt | wc -l
+wc -l  $domain/subdomains.txt
 echo "Aquatone Scan Completed----------------------------------------"
 
 
@@ -41,10 +41,10 @@ cat $domain/subdomains.txt | httprobe -c 50 -t 3000 > $domain/live_subdomains.tx
 
 #Nmap scripts
 echo "Now Nmap will ping for IP addresses............................"
-nmap -iL $domain/subdomains.txt -Pn -n -sn -oG $domain/nmap_live_ip.txt
+nmap -iL $domain/subdomains.txt -Pn -n -T4 --min-rate 200 --max-retries 2 --min-parallelism 10 -sn -oG $domain/nmap_live_ip.txt
 
 cat $domain/nmap_live_ip.txt | grep ^Host | cut -d " " -f 2 > $domain/live_ip.txt
-cat $domain/live_ip.txt | wc -l
+wc -l $domain/live_ip.txt
 rm $domain/nmap_live_ip.txt
 echo "Results of Nmap Host Status------------------------------------"
 
@@ -56,7 +56,7 @@ cat $domain/subdomains.txt | waybackurls | tee $domain/archiveurl.txt
 
 cat $domain/gau_urls.txt $domain/archiveurl.txt |  sort -u > $domain/waybackurls.txt
 echo "totoal waybackurls counts"
-cat $domain/waybackurls.txt | wc -l
+wc -l $domain/waybackurls.txt
 
 echo  "looking for vulnerable endpoints.............................."
 mkdir $domain/paramlist
@@ -73,17 +73,12 @@ echo "Gf patters Completed"
 
 wafw00f -i $domain/subdomains.txt -o $domain/waf.txt
 
-python3 ~/tools/Corsy/corsy.py -i $domain/live_subdomains.txt -o corsy.json
-
+python3 /opt/Corsy/corsy.py -i $domain/live_subdomains.txt -o corsy.json
 
 echo  "---------------------------------------------------------------"
 echo "Now don't forget to use the below commands. "
 echo "ffuf -w ~/tools/raft-wordlist/raft-large-directories.txt -u $domain/FUZZ -t 200"
-
 echo  "sudo nmap -iL $domain/live_ip.txt -A -O | tee $domain/nmap_scan.txt"
-
 echo "sudo masscan -iL $domain/live_ip.txt --top-ports -oX $domain/masscan_output.xml --max-rate 100000"
-
 echo "python3 ~/tools/dirsearch/dirsearch.py -L subdomains.txt -e php,asp,aspx,jsp,html,zip,jar  --plain-text-report=dir_results.txt"
-
-
+echo  "---------------------------------------------------------------"
